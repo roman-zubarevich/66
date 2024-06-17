@@ -156,6 +156,7 @@ export class Board {
       await Promise.all(promises)
       
       deck.resize(52, this.hiddenCards)
+      deck.reset()
       await deck.shuffle()
       
       await Promise.all(this.hands.map(hand => hand.populate(Array.from(Array(4), () => deck.takeCard(false)))))
@@ -307,7 +308,7 @@ export class Board {
           case "ShowCards":
             this.addAction(this.showCardsButton, () => {
               this.clearActions()
-
+              
               const hand = this.hands[this.playerIndex]
               const cardIndexesSet = new Set()
               this.addAction(hand, cardIndex => {
@@ -366,6 +367,7 @@ export class Board {
     if (!!this.hoverItem && this.hoverItem !== this.exitButton) {
       this.hoverItem.hover(false, this.hoverElementIndex)
       delete this.hoverItem
+      this.canvas.style.cursor = "auto"
     }
   }
 
@@ -623,10 +625,14 @@ export class Board {
   }
 
   click() {
-    if (this.hoverItem) {
+    if (this.hoverItem && !this.isHandlingAction) {
       const elementIndex = this.hoverElementIndex
       const handler = this.actionHandler
-      this.hoverItem.click(elementIndex).then(() => handler(elementIndex))
+      this.isHandlingAction = true
+      this.hoverItem.click(elementIndex).then(() => {
+        handler(elementIndex)
+        this.isHandlingAction = false
+      })
     }
   }
 }

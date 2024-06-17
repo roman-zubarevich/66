@@ -60,9 +60,7 @@ export class Deck {
 
   async shuffle() {
     const { left, top, right, bottom } = this.bounds
-    this.isShuffling = true
     await Promise.all(this.cards.map(card => card.moveTo(new Position(random(left, right), random(top, bottom), random(0, ANGLE_360)))))
-    this.isShuffling = false
     this.computeArea()
   }
 
@@ -102,10 +100,7 @@ export class Deck {
   }
 
   reset() {
-    if (this.isShuffling) {
-      this.cards.forEach(card => card.reset())
-      this.isShuffling = false
-    }
+    this.cards.forEach(card => card.reset())
   }
 
   draw(elapsedTimeSec) {
