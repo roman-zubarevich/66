@@ -23,6 +23,7 @@ export class Card {
     this.peekTrigger = machine.input(7).asTrigger()
     this.unpeekTrigger = machine.input(8).asTrigger()
     this.instantUnpeekTrigger = machine.input(9).asTrigger()
+    this.markTrigger = machine.input(10).asTrigger()
   }
 
   setPosition(position) {
@@ -85,6 +86,10 @@ export class Card {
     this.clickTrigger.fire()
     this.animation = { name: "click" }
     return movementPromise(this.animation)
+  }
+
+  mark() {
+    this.markTrigger.fire()
   }
 
   reset() {

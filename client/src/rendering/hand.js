@@ -283,11 +283,17 @@ export class Hand {
     return this.cards[index].moveTo(position)
   }
 
-  async transferCardTo(index, anotherHand, anotherCardIndex) {
+  async exchangeCardWith(index, anotherHand, anotherCardIndex) {
     const card = this.cards[index]
     const anotherCard = anotherHand.cards[anotherCardIndex]
-    await card.moveTo(anotherCard.position.copy())
+    await Promise.all([
+      card.moveTo(anotherCard.position.copy()),
+      anotherCard.moveTo(card.position.copy())
+    ])
+    this.cards[index] = anotherCard
     anotherHand.cards[anotherCardIndex] = card
+    card.mark()
+    anotherCard.mark()
   }
 
   // Note: replaced cards are removed from the hand but not deleted
@@ -305,6 +311,7 @@ export class Hand {
       indexes.forEach(index => this.cards.splice(index, 1))
       await this.align()
     }
+    newCard.mark()
   }
 
   enableClick(value = true) {

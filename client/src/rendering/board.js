@@ -377,12 +377,7 @@ export class Board {
   }
 
   async exchangeCards(playerIndex, cardIndex, anotherPlayerIndex, anotherPlayerCardIndex) {
-    const hand = this.hands[playerIndex]
-    const anotherHand = this.hands[anotherPlayerIndex]
-    await Promise.all([
-      hand.transferCardTo(cardIndex, anotherHand, anotherPlayerCardIndex),
-      anotherHand.transferCardTo(anotherPlayerCardIndex, hand, cardIndex),
-    ])
+    await this.hands[playerIndex].exchangeCardWith(cardIndex, this.hands[anotherPlayerIndex], anotherPlayerCardIndex)
   }
 
   async replaceCards(playerIndex, cardIndexes, fromDeck, discardedValue) {
