@@ -10,4 +10,6 @@ sealed class Request {
     abstract suspend fun handle(session: Session)
 
     fun failure(message: String, reason: ErrorReason? = null) = Failure(javaClass.simpleName, message, reason)
+
+    override fun toString(): String = javaClass.simpleName
 }

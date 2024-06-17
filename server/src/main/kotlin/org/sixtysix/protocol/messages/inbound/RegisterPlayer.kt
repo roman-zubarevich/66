@@ -12,7 +12,7 @@ import org.sixtysix.security.Util
 
 @Serializable
 @SerialName("RegisterPlayer")
-class RegisterPlayer(private val name: String) : Request() {
+data class RegisterPlayer(private val name: String) : Request() {
     override suspend fun handle(session: Session) {
         val safeName = name.take(Player.MAX_NAME_LENGTH)
         val player = Player(safeName)

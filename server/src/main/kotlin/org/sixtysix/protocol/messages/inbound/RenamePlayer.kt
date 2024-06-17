@@ -27,4 +27,6 @@ class RenamePlayer(private val secret: String, private val name: String) : Reque
             session.sendToAll(PlayerStatus(player.id, player.name, true))
         } ?: session.send(failure("Unknown player", ErrorReason.PLAYER_NOT_FOUND))
     }
+
+    override fun toString() = "${javaClass.simpleName}(name = $name)"
 }

@@ -8,7 +8,7 @@ import org.sixtysix.model.RoundState
 
 @Serializable
 @SerialName("ShowCards")
-class ShowCards(private val cardIndexes: List<Int>) : AbstractMoveRequest() {
+data class ShowCards(private val cardIndexes: List<Int>) : AbstractMoveRequest() {
     override val preStates = setOf(RoundState.DECK_CARD_TAKEN, RoundState.DISCARDED_CARD_TAKEN)
 
     override suspend fun updateState(session: Session, game: Game) {

@@ -35,7 +35,7 @@ fun Application.configureSockets() {
                 for (frame in incoming) {
                     frame as? Frame.Text ?: continue
                     val receivedText = frame.readText()
-                    // Not logging messages because they may contain player secrets
+                    // Not logging raw messages because they may contain player secrets
                     RequestDispatcher.dispatch(receivedText, session)
                 }
             } catch (e: Exception) {

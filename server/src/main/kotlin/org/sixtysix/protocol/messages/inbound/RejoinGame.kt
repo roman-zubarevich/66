@@ -39,4 +39,6 @@ class RejoinGame(private val gameId: Int, private val playerSecret: String) : Re
             } ?: session.send(failure("Game not found", ErrorReason.GAME_NOT_FOUND))
         } ?: session.send(failure("Unknown player", ErrorReason.PLAYER_NOT_FOUND))
     }
+
+    override fun toString() = "${javaClass.simpleName}(gameId = $gameId)"
 }

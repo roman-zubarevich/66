@@ -8,7 +8,7 @@ import org.sixtysix.model.RoundState
 
 @Serializable
 @SerialName("PickOwnCard")
-class PickOwnCard(private val cardIndex: Int) : AbstractMoveRequest() {
+data class PickOwnCard(private val cardIndex: Int) : AbstractMoveRequest() {
     override val preStates = setOf(
         RoundState.DECK_CARD_TAKEN,
         RoundState.DISCARDED_CARD_TAKEN,
