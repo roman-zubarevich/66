@@ -13,4 +13,5 @@ class BoardInitialized(
     private val stopperIndex: Int?,
     private val round: Int,
     private val turn: Int,
+    private val totalScores: List<Int>,
 ) : Notification()

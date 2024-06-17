@@ -84,9 +84,13 @@ export class Hand {
     this.cards.forEach(card => card.reset())
   }
 
-  setScore(score, total) {
-    const winner = score === 0 ? " | round winner!" : ""
-    this.setSuffix(` | score: ${score} | total: ${total}${winner}`)
+  setScore(totalScore, roundScore) {
+    let roundSuffix = ""
+    if (roundScore !== undefined) {
+      const winner = roundScore === 0 ? " | round winner!" : ""
+      roundSuffix = ` | round score: ${roundScore}${winner}`
+    }
+    this.setSuffix(` | total score: ${totalScore}${roundSuffix}`)
   }
 
   setSuffix(suffix = "") {

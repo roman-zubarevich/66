@@ -64,7 +64,7 @@ class Game(val id: Int, val playerIds: List<String>) : Persistable {
         suspendTimeStr = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     }
 
-    fun getBoardInitializedMessage() = board.getBoardInitializedMessage(round)
+    fun getBoardInitializedMessage() = board.getBoardInitializedMessage(round, totalScores)
 
     fun getRoundFinishedMessage(isGameFinished: Boolean) = board.getRoundFinishedMessage(totalScores, isGameFinished)
 

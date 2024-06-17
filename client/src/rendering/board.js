@@ -148,8 +148,8 @@ export class Board {
         this.discarded.length = 0
       }
 
-      this.hands.forEach(hand => {
-        hand.setSuffix()
+      this.hands.forEach((hand, index) => {
+        hand.setScore(this.totalScores[index])
         promises.push(hand.hideCards())
         hand.takeAllCards().forEach(card => deck.addCard(card))
       })
@@ -173,7 +173,7 @@ export class Board {
 
       this.handSizes.forEach((handSize, index) => {
         const hand = this.hands[index]
-        hand.setSuffix()
+        hand.setScore(this.totalScores[index])
         hand.resize(handSize, this.hiddenCards)
       })
   
@@ -285,30 +285,30 @@ export class Board {
         switch (action) {
           case "StartNextRound":
             this.addAction(this.nextRoundButton, () => this.act(action))
-            break;
+            break
           case "TakeCardFromDeck":
             this.addAction(this.deck, () => this.act(action))
-            break;
+            break
           case "TakeDiscardedCard":
             this.addAction(this.discardedCard, () => this.act(action))
-            break;
+            break
           case "Discard":
             this.addAction(this.discardButton, () => this.act(action))
-            break;
+            break
           case "PickOwnCard":
             this.addAction(this.hands[this.playerIndex], cardIndex => this.act(action, { cardIndex }))
-            break;
+            break
           case "PickAnothersCard":
             this.hands.forEach((hand, playerIndex) => {
               if (playerIndex !== this.playerIndex) {
                 this.addAction(hand, cardIndex => this.act(action, { playerIndex, cardIndex }))
               }
             })
-            break;
+            break
           case "ShowCards":
             this.addAction(this.showCardsButton, () => {
               this.clearActions()
-              
+
               const hand = this.hands[this.playerIndex]
               const cardIndexesSet = new Set()
               this.addAction(hand, cardIndex => {
@@ -334,10 +334,10 @@ export class Board {
                 }
               })
             })
-            break;
+            break
           case "StopRound":
             this.addAction(this.stopButton, () => this.act(action))
-            break;
+            break
           default:
             console.error("Unexpected action", action)
         }
@@ -502,7 +502,7 @@ export class Board {
     await Promise.all(promises)
     const totalScores = result.totalScores
     this.hands.forEach((hand, handIndex) => {
-      hand.setScore(result.scores[handIndex], totalScores[handIndex])
+      hand.setScore(totalScores[handIndex], result.scores[handIndex])
     })
     if (result.isGameFinished) {
       await Promise.all(this.cats.map(cat => cat.wakeUp()))
@@ -514,6 +514,7 @@ export class Board {
       })
       this.clearActions(false)
     } else {
+      this.totalScores = totalScores
       this.finishedRound = true
     }
   }

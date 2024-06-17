@@ -123,7 +123,7 @@ class Board(playerCount: Int, var activePlayerIndex: Int) {
         scores = allScores
     }
 
-    fun getBoardInitializedMessage(round: Int) = BoardInitialized(
+    fun getBoardInitializedMessage(round: Int, totalScores: List<Int>) = BoardInitialized(
         activePlayerIndex = activePlayerIndex,
         deckSize = deckSize,
         discardedValue = if (hasDiscarded) discardedCard else null,
@@ -131,6 +131,7 @@ class Board(playerCount: Int, var activePlayerIndex: Int) {
         stopperIndex = if (isStopRequested) stopperIndex else null,
         round = round,
         turn = turn,
+        totalScores = totalScores,
     )
 
     fun getRoundFinishedMessage(totalScores: List<Int>, isGameFinished: Boolean) =
