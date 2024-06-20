@@ -1,7 +1,7 @@
 package org.sixtysix.model
 
-import org.sixtysix.protocol.messages.outbound.BoardInitialized
-import org.sixtysix.protocol.messages.outbound.RoundFinished
+import org.sixtysix.protocol.dto.outbound.BoardInitialized
+import org.sixtysix.protocol.dto.outbound.RoundFinished
 import org.sixtysix.security.Util
 import javax.crypto.SecretKey
 import kotlin.random.Random

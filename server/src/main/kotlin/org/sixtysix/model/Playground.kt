@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.sixtysix.persistence.PlaygroundRepository
-import org.sixtysix.protocol.SessionManager
+import org.sixtysix.network.SessionManager
 import org.sixtysix.security.Util.hash
 import org.slf4j.LoggerFactory
 import java.util.Timer
@@ -120,15 +120,15 @@ object Playground {
     fun isGameStarted(id: Int) = gameById.containsKey(id)
 
     // Needs to be called with acquired lock for the game id
-    suspend fun deleteGame(id: Int) {
+    suspend fun deleteGame(id: Int, sessionManager: SessionManager) {
         val game = gameById.remove(id)!!
         PlaygroundRepository.delete(game)
         gameMutexById.remove(id)
-        SessionManager.removeGameId(id)
+        sessionManager.removeGameId(id)
         // Not locking players to avoid deadlock; it is safe because the gameId is abandoned at this point
         game.playerIds.forEach {
             playerById[it]!!.leaveGame(id)
-            SessionManager.getSession(it)?.resetGameId(id)
+            sessionManager.getSession(it)?.resetGameId(id)
         }
     }
 

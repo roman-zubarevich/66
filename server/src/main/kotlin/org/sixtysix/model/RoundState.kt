@@ -1,22 +1,22 @@
 package org.sixtysix.model
 
-import org.sixtysix.protocol.Session
-import org.sixtysix.protocol.messages.PlayerCards
-import org.sixtysix.protocol.messages.inbound.Discard
-import org.sixtysix.protocol.messages.inbound.PickAnothersCard
-import org.sixtysix.protocol.messages.inbound.PickOwnCard
-import org.sixtysix.protocol.messages.inbound.Request
-import org.sixtysix.protocol.messages.inbound.ShowCards
-import org.sixtysix.protocol.messages.inbound.StartNextRound
-import org.sixtysix.protocol.messages.inbound.StopRound
-import org.sixtysix.protocol.messages.inbound.TakeCardFromDeck
-import org.sixtysix.protocol.messages.inbound.TakeDiscardedCard
-import org.sixtysix.protocol.messages.outbound.BoardUpdated
-import org.sixtysix.protocol.messages.outbound.CardExchanged
-import org.sixtysix.protocol.messages.outbound.CardsReplaced
-import org.sixtysix.protocol.messages.outbound.CardsRevealed
-import org.sixtysix.protocol.messages.outbound.StopRequested
-import org.sixtysix.protocol.messages.outbound.TurnStarted
+import org.sixtysix.network.Session
+import org.sixtysix.protocol.dto.PlayerCards
+import org.sixtysix.protocol.dto.inbound.Discard
+import org.sixtysix.protocol.dto.inbound.PickAnothersCard
+import org.sixtysix.protocol.dto.inbound.PickOwnCard
+import org.sixtysix.protocol.dto.inbound.Request
+import org.sixtysix.protocol.dto.inbound.ShowCards
+import org.sixtysix.protocol.dto.inbound.StartNextRound
+import org.sixtysix.protocol.dto.inbound.StopRound
+import org.sixtysix.protocol.dto.inbound.TakeCardFromDeck
+import org.sixtysix.protocol.dto.inbound.TakeDiscardedCard
+import org.sixtysix.protocol.dto.outbound.BoardUpdated
+import org.sixtysix.protocol.dto.outbound.CardExchanged
+import org.sixtysix.protocol.dto.outbound.CardsReplaced
+import org.sixtysix.protocol.dto.outbound.CardsRevealed
+import org.sixtysix.protocol.dto.outbound.StopRequested
+import org.sixtysix.protocol.dto.outbound.TurnStarted
 
 enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
     ROUND_STARTING({ session, game ->
@@ -131,7 +131,7 @@ enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
     ROUND_FINISHED({ session, game ->
         val isGameFinished = game.totalScores.any { it > 66 }
         game.notifyAllPlayers(session, game.getRoundFinishedMessage(isGameFinished)) {
-            if (isGameFinished) Playground.deleteGame(game.id)
+            if (isGameFinished) Playground.deleteGame(game.id, session.sessionManager)
             else game.sendToActivePlayer(session, BoardUpdated(actions = listOf(StartNextRound::class.simpleName!!)))
         }
     });

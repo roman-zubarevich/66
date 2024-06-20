@@ -1,9 +1,9 @@
 package org.sixtysix.model
 
-import org.sixtysix.protocol.Session
+import org.sixtysix.network.Session
 import org.sixtysix.persistence.PlaygroundRepository
 import org.sixtysix.persistence.Persistable
-import org.sixtysix.protocol.messages.outbound.Notification
+import org.sixtysix.protocol.dto.outbound.Notification
 import org.sixtysix.security.Util.toKey
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
