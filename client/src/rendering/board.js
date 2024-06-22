@@ -566,6 +566,7 @@ export class Board {
 
     this.cats.forEach(cat => cat.delete())
     this.stopSign.delete()
+    renderer.delete()
 
     Hand.count = 0
     Card.count = 0
