@@ -7,8 +7,6 @@ import io.ktor.websocket.*
 import org.sixtysix.model.Playground
 import org.sixtysix.network.SessionManager
 import org.sixtysix.network.RequestDispatcher
-import org.sixtysix.protocol.JsonMessageDecoder
-import org.sixtysix.protocol.JsonMessageEncoder
 import org.sixtysix.protocol.dto.inbound.LeaveGame
 import org.sixtysix.protocol.dto.inbound.ListOnlinePlayers
 import org.sixtysix.protocol.dto.inbound.ListOpenGames
@@ -20,7 +18,11 @@ import java.time.Duration
 
 val logger: Logger = LoggerFactory.getLogger(Application::class.java)
 
-fun Application.configureSockets(sessionManager: SessionManager, requestDispatcher: RequestDispatcher) {
+fun Application.configureSockets(
+    sessionManager: SessionManager,
+    requestDispatcher: RequestDispatcher,
+    playground: Playground,
+) {
     install(WebSockets) {
         pingPeriod = Duration.ofSeconds(15)
         timeout = Duration.ofSeconds(15)
@@ -32,8 +34,8 @@ fun Application.configureSockets(sessionManager: SessionManager, requestDispatch
         webSocket("/") {
             logger.info("Connected {}", this)
             val session = sessionManager.createSession(this)
-            ListOnlinePlayers.handle(session)
-            ListOpenGames.handle(session)
+            ListOnlinePlayers.handle(session, playground)
+            ListOpenGames.handle(session, playground)
             try {
                 for (frame in incoming) {
                     frame as? Frame.Text ?: continue
@@ -47,8 +49,12 @@ fun Application.configureSockets(sessionManager: SessionManager, requestDispatch
                 // Disconnected; no more messages can be sent to this player
                 logger.info("Disconnected {}", this)
                 session.isActive = false
-                session.getGameId()?.let { (if (Playground.isGameStarted(it)) SuspendGame else LeaveGame).handle(session) }
-                session.getPlayer()?.let { session.sendToAll(PlayerStatus(it.id, it.name, false), false) }
+                session.getGameId()?.let {
+                    (if (playground.isGameStarted(it)) SuspendGame else LeaveGame).handle(session, playground)
+                }
+                session.getPlayer()?.let {
+                    session.sendToAll(PlayerStatus(it.id, it.name, false), false)
+                }
                 session.close()
             }
         }

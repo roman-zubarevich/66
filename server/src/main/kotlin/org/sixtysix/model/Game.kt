@@ -1,7 +1,6 @@
 package org.sixtysix.model
 
 import org.sixtysix.network.Session
-import org.sixtysix.persistence.PlaygroundRepository
 import org.sixtysix.persistence.Persistable
 import org.sixtysix.protocol.dto.outbound.Notification
 import org.sixtysix.security.Util.toKey
@@ -18,12 +17,7 @@ class Game(val id: Int, val playerIds: List<String>) : Persistable {
     override val _id: String = id.toString()
     override var _rev: String? = null
 
-    @Transient
-    private var pendingAckPlayerIds: MutableSet<String> = mutableSetOf()
-    @Transient
-    private var pendingAckHandler: suspend () -> Unit = {}
-
-    val playerNames get() = Playground.mapPlayers(playerIds) { it.name }
+    val playerNames get() = playground!!.mapPlayers(playerIds) { it.name }
     val idlePlayerIndexes get() = playerIds.indices.filter { it != board.activePlayerIndex }
     val suspendTime get() = suspendTimeStr!!
     val isSuspended get() = suspendTimeStr != null
@@ -34,8 +28,17 @@ class Game(val id: Int, val playerIds: List<String>) : Persistable {
 
     private val activePlayerId get() = playerIds[board.activePlayerIndex]
     private val idlePlayerIds get() = idlePlayerIndexes.map { playerIds[it] }
+
     @Transient
-    var secretKeys: List<SecretKey> = getPlayerKeys()
+    var playground: Playground? = null
+
+    @Transient
+    private var secretKeys: List<SecretKey> = getPlayerKeys()
+    @Transient
+    private var pendingAckPlayerIds: MutableSet<String> = mutableSetOf()
+    @Transient
+    private var pendingAckHandler: suspend () -> Unit = {}
+
 
     fun isPlayerIndexValid(playerIndex: Int) = playerIndex >= 0 && playerIndex < playerIds.size
 
@@ -109,9 +112,10 @@ class Game(val id: Int, val playerIds: List<String>) : Persistable {
     suspend fun sendToActivePlayer(session: Session, notification: Notification) =
         session.sendTo(activePlayerId, notification)
 
-    private fun getPlayerKeys() = Playground.mapPlayers(playerIds) { it.secret.toKey() }
+    private fun getPlayerKeys() = playground!!.mapPlayers(playerIds) { it.secret.toKey() }
 
-    fun onLoad() {
+    fun onLoad(playground: Playground) {
+        this.playground = playground
         if (suspendTimeStr == null) markSuspendTime()
     }
 
@@ -123,6 +127,6 @@ class Game(val id: Int, val playerIds: List<String>) : Persistable {
 
     fun save() {
         board.encodeData(secretKeys)
-        PlaygroundRepository.save(this)
+        playground!!.repository.save(this)
     }
 }

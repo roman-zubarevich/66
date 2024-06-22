@@ -4,7 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.sixtysix.network.Session
 import org.sixtysix.model.Playground
-import org.sixtysix.network.SessionManager
 import org.sixtysix.protocol.dto.ErrorReason
 import org.sixtysix.protocol.dto.outbound.GameDeleted
 import org.sixtysix.protocol.dto.outbound.PlayerRemoved
@@ -12,14 +11,14 @@ import org.sixtysix.protocol.dto.outbound.PlayerRemoved
 @Serializable
 @SerialName("LeaveGame")
 data object LeaveGame : Request() {
-    override suspend fun handle(session: Session) {
+    override suspend fun handle(session: Session, playground: Playground) {
         val gameId = session.getGameId()
         if (gameId == null) {
             session.send(failure("You have not joined any game"))
             return
         }
 
-        Playground.withGameLobby(gameId) { gameLobby ->
+        playground.withGameLobby(gameId) { gameLobby ->
             when (val playerIndex = gameLobby.indexOfPlayerId(session.getPlayer()!!.id)) {
                 -1 -> {
                     session.send(failure("Player is not in the game"))
@@ -28,7 +27,7 @@ data object LeaveGame : Request() {
 
                 0 -> {
                     // Player created this game
-                    Playground.deleteGameLobby(gameLobby.id)
+                    playground.deleteGameLobby(gameLobby.id)
                     session.sessionManager.removeGameId(gameLobby.id)
                     session.sendToAll(GameDeleted(gameLobby.id), true)
                 }

@@ -4,7 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.sixtysix.network.Session
 import org.sixtysix.model.Playground
-import org.sixtysix.network.SessionManager
 import org.sixtysix.protocol.dto.ErrorReason
 import org.sixtysix.protocol.dto.SuspendedGame
 import org.sixtysix.protocol.dto.outbound.PlayerStatus
@@ -16,12 +15,12 @@ import org.slf4j.LoggerFactory
 class ListSuspendedGames(private val playerSecret: String) : Request() {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override suspend fun handle(session: Session) {
-        Playground.withPlayerBySecret(playerSecret) { player ->
+    override suspend fun handle(session: Session, playground: Playground) {
+        playground.withPlayerBySecret(playerSecret) { player ->
             val games = mutableListOf<SuspendedGame>()
             val invalidGameIds = mutableSetOf<Int>()
             player.gameIds.keys.forEach { gameId ->
-                Playground.withGame(gameId) { game ->
+                playground.withGame(gameId) { game ->
                     if (!game.isSuspended) return@withGame
 
                     val playerIndex = game.playerIds.indexOf(player.id)
@@ -38,7 +37,10 @@ class ListSuspendedGames(private val playerSecret: String) : Request() {
                 }
             }
 
-            player.leaveGames(invalidGameIds)
+            if (invalidGameIds.isNotEmpty()) {
+                invalidGameIds.forEach { player.leaveGame(it, false) }
+                playground.repository.save(player)
+            }
 
             session.setPlayer(player)
             session.send(SuspendedGames(games))

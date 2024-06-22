@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 import java.io.FileInputStream
 import java.util.Properties
 
-object PlaygroundRepository {
+class CouchDbRepository : Repository {
     // Any exception here will prevent the server from starting
     private val dbClient = CouchDbClient(getProperties())
 
@@ -38,33 +38,15 @@ object PlaygroundRepository {
     }
 
     // Any exception here will prevent the server from starting
-    fun loadPlayers() = dbClient.findDocs("{ \"selector\": { \"name\": { \"\$exists\": true } } }", Player::class.java)
+    override fun loadPlayers() = dbClient.findDocs("{ \"selector\": { \"name\": { \"\$exists\": true } } }", Player::class.java)
         .associateBy { it._id }
 
     // Any exception here will prevent the server from starting
-    fun loadGames() = dbClient.findDocs("{ \"selector\": { \"board\": { \"\$exists\": true } } }", Game::class.java)
-        .onEach { it.onLoad() }
+    override fun loadGames() = dbClient.findDocs("{ \"selector\": { \"board\": { \"\$exists\": true } } }", Game::class.java)
         .associateBy { it.id }
 
     @Synchronized
-    fun delete(data: Persistable, retryOnFailure: Boolean = true): Boolean {
-        try {
-            dbClient.remove(data._id, data._rev)
-            // Database is up and running at this point
-            retryFailedOperations()
-            return true
-        } catch (e: NoDocumentException) {
-            logger.error("Failed to delete object ${data._id}: not found")
-            // No further action can be taken
-        } catch (e: CouchDbException) {
-            logger.error("Failed to delete object ${data._id}", e)
-            if (retryOnFailure) failedOperationById[data._id] = { delete(data, false) }
-        }
-        return false
-    }
-
-    @Synchronized
-    fun save(data: Persistable, retryOnFailure: Boolean = true): Boolean {
+    override fun save(data: Persistable, retryOnFailure: Boolean): Boolean {
         try {
             val response = if (data._rev == null) dbClient.save(data) else dbClient.update(data)
             data._rev = response.rev
@@ -77,6 +59,23 @@ object PlaygroundRepository {
         } catch (e: CouchDbException) {
             logger.error("Failed to save object ${data._id}", e)
             if (retryOnFailure) failedOperationById[data._id] = { save(data, false) }
+        }
+        return false
+    }
+
+    @Synchronized
+    override fun delete(data: Persistable, retryOnFailure: Boolean): Boolean {
+        try {
+            dbClient.remove(data._id, data._rev)
+            // Database is up and running at this point
+            retryFailedOperations()
+            return true
+        } catch (e: NoDocumentException) {
+            logger.error("Failed to delete object ${data._id}: not found")
+            // No further action can be taken
+        } catch (e: CouchDbException) {
+            logger.error("Failed to delete object ${data._id}", e)
+            if (retryOnFailure) failedOperationById[data._id] = { delete(data, false) }
         }
         return false
     }

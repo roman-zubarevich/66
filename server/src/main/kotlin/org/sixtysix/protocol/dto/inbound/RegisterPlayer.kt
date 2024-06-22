@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 import org.sixtysix.network.Session
 import org.sixtysix.model.Player
 import org.sixtysix.model.Playground
-import org.sixtysix.persistence.PlaygroundRepository
 import org.sixtysix.protocol.dto.outbound.PlayerInfo
 import org.sixtysix.protocol.dto.outbound.PlayerStatus
 import org.sixtysix.security.Util
@@ -13,15 +12,15 @@ import org.sixtysix.security.Util
 @Serializable
 @SerialName("RegisterPlayer")
 data class RegisterPlayer(private val name: String) : Request() {
-    override suspend fun handle(session: Session) {
+    override suspend fun handle(session: Session, playground: Playground) {
         val safeName = name.take(Player.MAX_NAME_LENGTH)
         val player = Player(safeName)
 
         var secret: String
-        do secret = Util.newSecret().also { player.updateSecret(it, true) } while (!Playground.addPlayer(player))
+        do secret = Util.newSecret().also { player.updateSecret(it, true) } while (!playground.addPlayer(player))
 
-        if (!PlaygroundRepository.save(player, false)) {
-            Playground.deletePlayer(player.id)
+        if (!playground.repository.save(player, false)) {
+            playground.deletePlayer(player.id)
             session.send(failure("Internal error"))
             return
         }

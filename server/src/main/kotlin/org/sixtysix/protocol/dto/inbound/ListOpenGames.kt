@@ -6,8 +6,8 @@ import org.sixtysix.protocol.dto.OpenGame
 import org.sixtysix.protocol.dto.outbound.OpenGames
 
 data object ListOpenGames : Request() {
-    override suspend fun handle(session: Session) {
-        val openGames = Playground.mapGameLobbies { OpenGame(it.id, it.openTime, it.playerNames) }
+    override suspend fun handle(session: Session, playground: Playground) {
+        val openGames = playground.mapGameLobbies { OpenGame(it.id, it.openTime, it.playerNames) }
         session.send(OpenGames(openGames))
     }
 }

@@ -8,14 +8,14 @@ import org.sixtysix.model.Playground
 @Serializable
 @SerialName("Ack")
 data object Ack : Request() {
-    override suspend fun handle(session: Session) {
+    override suspend fun handle(session: Session, playground: Playground) {
         val gameId = session.getGameId()
         if (gameId == null) {
             session.send(failure("Not in a game"))
             return
         }
 
-        Playground.withGame(gameId) { game ->
+        playground.withGame(gameId) { game ->
             game.processAck(session.getPlayer()!!.id)
         } ?: session.send(failure("Game not found"))
     }

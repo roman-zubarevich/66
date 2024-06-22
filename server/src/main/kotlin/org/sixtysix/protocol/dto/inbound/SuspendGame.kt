@@ -12,14 +12,14 @@ import org.sixtysix.protocol.dto.outbound.PlayerLeft
 @Serializable
 @SerialName("SuspendGame")
 data object SuspendGame : Request() {
-    override suspend fun handle(session: Session) {
+    override suspend fun handle(session: Session, playground: Playground) {
         val gameId = session.getGameId()
         if (gameId == null) {
             session.send(failure("You have not joined any game"))
             return
         }
 
-        Playground.withGame(gameId) { game ->
+        playground.withGame(gameId) { game ->
             val playerIndex = game.playerIds.indexOf(session.getPlayer()!!.id)
             if (playerIndex == -1) {
                 session.send(failure("Player is not in the game"))

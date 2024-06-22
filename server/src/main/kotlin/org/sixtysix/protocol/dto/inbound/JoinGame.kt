@@ -11,9 +11,9 @@ import org.sixtysix.protocol.dto.outbound.NewPlayer
 @Serializable
 @SerialName("JoinGame")
 class JoinGame(private val gameId: Int, private val playerSecret: String) : Request() {
-    override suspend fun handle(session: Session) {
-        Playground.withPlayerBySecret(playerSecret) { player ->
-            Playground.withGameLobby(gameId) { gameLobby ->
+    override suspend fun handle(session: Session, playground: Playground) {
+        playground.withPlayerBySecret(playerSecret) { player ->
+            playground.withGameLobby(gameId) { gameLobby ->
                 if (gameLobby.isFull) {
                     session.send(failure("The game is full"))
                     return@withGameLobby

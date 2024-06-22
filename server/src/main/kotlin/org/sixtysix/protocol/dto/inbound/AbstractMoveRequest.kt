@@ -10,14 +10,14 @@ import org.sixtysix.model.RoundState
 sealed class AbstractMoveRequest : Request() {
     abstract val preStates: Set<RoundState>
 
-    override suspend fun handle(session: Session) {
+    override suspend fun handle(session: Session, playground: Playground) {
         val gameId = session.getGameId()
         if (gameId == null) {
             session.send(failure("You have not joined any game"))
             return
         }
 
-        Playground.withGame(gameId) { game ->
+        playground.withGame(gameId) { game ->
             if (game.isSuspended) {
                 session.send(failure("Game is suspended"))
                 return@withGame

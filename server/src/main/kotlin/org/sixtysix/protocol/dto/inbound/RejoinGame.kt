@@ -4,16 +4,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.sixtysix.network.Session
 import org.sixtysix.model.Playground
-import org.sixtysix.network.SessionManager
 import org.sixtysix.protocol.dto.ErrorReason
 import org.sixtysix.protocol.dto.outbound.PlayerRejoined
 
 @Serializable
 @SerialName("RejoinGame")
 class RejoinGame(private val gameId: Int, private val playerSecret: String) : Request() {
-    override suspend fun handle(session: Session) {
-        Playground.withPlayerBySecret(playerSecret) { player ->
-            Playground.withGame(gameId) { game ->
+    override suspend fun handle(session: Session, playground: Playground) {
+        playground.withPlayerBySecret(playerSecret) { player ->
+            playground.withGame(gameId) { game ->
                 val playerIndex = game.playerIds.indexOf(player.id)
                 if (playerIndex == -1) {
                     session.send(failure("Player is not in the game"))

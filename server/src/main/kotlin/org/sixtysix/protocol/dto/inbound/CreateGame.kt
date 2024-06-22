@@ -12,9 +12,9 @@ import org.sixtysix.protocol.dto.outbound.OpenGames
 @Serializable
 @SerialName("CreateGame")
 class CreateGame(private val playerSecret: String) : Request() {
-    override suspend fun handle(session: Session) {
-        Playground.withPlayerBySecret(playerSecret) { player ->
-            val gameLobby = Playground.newGameLobby(player.id)
+    override suspend fun handle(session: Session, playground: Playground) {
+        playground.withPlayerBySecret(playerSecret) { player ->
+            val gameLobby = playground.newGameLobby(player.id)
             session.setGameId(gameLobby.id)
             session.send(JoinedGame(gameLobby.id))
 

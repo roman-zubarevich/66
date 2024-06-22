@@ -131,7 +131,7 @@ enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
     ROUND_FINISHED({ session, game ->
         val isGameFinished = game.totalScores.any { it > 66 }
         game.notifyAllPlayers(session, game.getRoundFinishedMessage(isGameFinished)) {
-            if (isGameFinished) Playground.deleteGame(game.id, session.sessionManager)
+            if (isGameFinished) game.playground!!.deleteGame(game.id, session.sessionManager)
             else game.sendToActivePlayer(session, BoardUpdated(actions = listOf(StartNextRound::class.simpleName!!)))
         }
     });

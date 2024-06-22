@@ -3,8 +3,8 @@ package org.sixtysix.model
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.sixtysix.persistence.PlaygroundRepository
 import org.sixtysix.network.SessionManager
+import org.sixtysix.persistence.Repository
 import org.sixtysix.security.Util.hash
 import org.slf4j.LoggerFactory
 import java.util.Timer
@@ -13,20 +13,27 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
 
-object Playground {
-    private val playerById: ConcurrentMap<String, Player> = ConcurrentHashMap(PlaygroundRepository.loadPlayers())
-    private val playerMutexById: ConcurrentMap<String, Mutex> = ConcurrentHashMap(playerById.mapValues { Mutex() })
+class Playground(val repository: Repository) {
+    private val playerById: ConcurrentMap<String, Player> = ConcurrentHashMap()
+    private val playerMutexById: ConcurrentMap<String, Mutex> = ConcurrentHashMap()
 
-    private val gameById: ConcurrentMap<Int, Game> = ConcurrentHashMap(PlaygroundRepository.loadGames())
+    private val gameById: ConcurrentMap<Int, Game> = ConcurrentHashMap()
     private val gameLobbyById: ConcurrentMap<Int, GameLobby> = ConcurrentHashMap()
-    private val gameMutexById: ConcurrentMap<Int, Mutex> = ConcurrentHashMap(gameById.mapValues { Mutex() })
+    private val gameMutexById: ConcurrentMap<Int, Mutex> = ConcurrentHashMap()
 
-    private val maxGameId = AtomicInteger(gameById.maxOfOrNull { it.key } ?: -1)
+    private val maxGameId = AtomicInteger(-1)
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
 
     fun init() {
+        playerById.putAll(repository.loadPlayers())
+        playerMutexById.putAll(playerById.mapValues { Mutex() })
+
+        gameById.putAll(repository.loadGames().onEach { it.value.onLoad(this) })
+        gameMutexById.putAll(gameById.mapValues { Mutex() })
+        if (gameById.isNotEmpty()) maxGameId.set(gameById.maxOf { it.key })
+
         logger.info("Loaded {} player(s) and {} game(s)", playerById.size, gameById.size)
 
         Timer().schedule(0, 1000L * 3600 * 24 * 7) {
@@ -38,8 +45,11 @@ object Playground {
                         val game = gameById[id]
                         if (game?.isTooOld == true) {
                             gameById.remove(id)
-                            game.playerIds.forEach { playerById[it]!!.leaveGame(id, false) }
-                            PlaygroundRepository.delete(game, false)
+                            game.playerIds.mapNotNull { playerById[it] }.forEach {
+                                it.leaveGame(id, false)
+                                repository.save(it)
+                            }
+                            repository.delete(game, false)
                             gameMutexIterator.remove()
                             logger.info("Deleted game {} as expired", id)
                         }
@@ -53,7 +63,7 @@ object Playground {
                         val player = playerById[id]
                         if (player?.isTooOld == true) {
                             playerById.remove(id)
-                            PlaygroundRepository.delete(player, false)
+                            repository.delete(player, false)
                             playerMutexIterator.remove()
                             logger.info("Deleted player {} ({}) as expired", id, player.name)
                         }
@@ -96,7 +106,7 @@ object Playground {
         gameMutexById.remove(id)
     }
 
-    fun newGameLobby(playerId: String) = GameLobby(maxGameId.incrementAndGet()).also {
+    fun newGameLobby(playerId: String) = GameLobby(maxGameId.incrementAndGet(), this).also {
         it.addPlayerId(playerId)
         gameLobbyById[it.id] = it
         gameMutexById[it.id] = Mutex()
@@ -122,13 +132,16 @@ object Playground {
     // Needs to be called with acquired lock for the game id
     suspend fun deleteGame(id: Int, sessionManager: SessionManager) {
         val game = gameById.remove(id)!!
-        PlaygroundRepository.delete(game)
+        repository.delete(game)
         gameMutexById.remove(id)
         sessionManager.removeGameId(id)
         // Not locking players to avoid deadlock; it is safe because the gameId is abandoned at this point
-        game.playerIds.forEach {
-            playerById[it]!!.leaveGame(id)
-            sessionManager.getSession(it)?.resetGameId(id)
+        game.playerIds.forEach { playerId ->
+            playerById[playerId]!!.let {
+                it.leaveGame(id)
+                repository.save(it)
+            }
+            sessionManager.getSession(playerId)?.resetGameId(id)
         }
     }
 

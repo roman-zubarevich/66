@@ -6,6 +6,7 @@ import io.ktor.server.netty.*
 import org.sixtysix.model.Playground
 import org.sixtysix.network.RequestDispatcher
 import org.sixtysix.network.SessionManager
+import org.sixtysix.persistence.CouchDbRepository
 import org.sixtysix.plugins.configureSockets
 import org.sixtysix.protocol.JsonMessageDecoder
 import org.sixtysix.protocol.JsonMessageEncoder
@@ -15,6 +16,8 @@ fun main() {
 }
 
 fun Application.module() {
-    Playground.init()
-    configureSockets(SessionManager(JsonMessageEncoder), RequestDispatcher(JsonMessageDecoder))
+    val playground = Playground(CouchDbRepository()).also { it.init() }
+    val sessionManager = SessionManager(JsonMessageEncoder())
+    val requestDispatcher = RequestDispatcher(JsonMessageDecoder(), playground)
+    configureSockets(sessionManager, requestDispatcher, playground)
 }

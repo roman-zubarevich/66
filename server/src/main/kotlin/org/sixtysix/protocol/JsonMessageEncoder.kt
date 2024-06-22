@@ -5,7 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.sixtysix.protocol.dto.outbound.Notification
 
-object JsonMessageEncoder : MessageEncoder {
+class JsonMessageEncoder : MessageEncoder {
     @OptIn(ExperimentalSerializationApi::class)
     private val json = Json { explicitNulls = false }
 

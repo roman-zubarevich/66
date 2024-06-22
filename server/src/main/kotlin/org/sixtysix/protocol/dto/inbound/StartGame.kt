@@ -12,14 +12,14 @@ import kotlin.random.Random
 @Serializable
 @SerialName("StartGame")
 data object StartGame : Request() {
-    override suspend fun handle(session: Session) {
+    override suspend fun handle(session: Session, playground: Playground) {
         val gameId = session.getGameId()
         if (gameId == null) {
             session.send(failure("You have not joined any game"))
             return
         }
 
-        Playground.withGameLobby(gameId) { gameLobby ->
+        playground.withGameLobby(gameId) { gameLobby ->
             if (!gameLobby.canStart) {
                 session.send(failure("Need more players to start"))
                 return@withGameLobby
@@ -31,12 +31,15 @@ data object StartGame : Request() {
                 return@withGameLobby
             }
 
-            val game = Playground.startGame(gameLobby)
+            val game = playground.startGame(gameLobby)
             session.sendToNonCoPlayers(GameDeleted(game.id))
 
             game.notifyAllPlayers(session, GameStarted(game.id)) {
                 game.newRound(Random.nextInt(game.playerIds.size))
-                Playground.mapPlayers(game.playerIds) { it.joinGame(game.id) }
+                playground.mapPlayers(game.playerIds) {
+                    it.joinGame(game.id)
+                    playground.repository.save(it)
+                }
                 game.save()
                 game.proceed(session)
             }
