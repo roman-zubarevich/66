@@ -69,7 +69,8 @@ export class Deck {
   }
 
   takeCard(recalculateArea = true) {
-    const card = this.cards.pop()
+    const [card] = this.cards.splice(this.clickedCardIndex, 1)
+    delete this.clickedCardIndex
     if (recalculateArea) {
       const { x, y } = card.position
       const { left, top, right, bottom } = this.area
@@ -94,9 +95,8 @@ export class Deck {
   }
 
   click(cardIndex) {
-    const [hoverCard] = this.cards.splice(cardIndex, 1)
-    this.cards.push(hoverCard)
-    return this.cards.at(-1).click()
+    this.clickedCardIndex = cardIndex
+    return this.cards[cardIndex].click()
   }
 
   reset() {

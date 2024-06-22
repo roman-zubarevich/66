@@ -367,7 +367,7 @@ export class Board {
     if (!!this.hoverItem && this.hoverItem !== this.exitButton) {
       this.hoverItem.hover(false, this.hoverElementIndex)
       delete this.hoverItem
-      this.canvas.style.cursor = "auto"
+      this.setPointerCursor(false)
     }
   }
 
@@ -573,6 +573,10 @@ export class Board {
     this.isDestroyed = true
   }
 
+  setPointerCursor(enable = true) {
+    this.canvas.style.cursor = enable ? "pointer" : "auto"
+  }
+
   mouseMove(event) {
     this.lastMouseEvent = event
     const x = (event.x - canvasLeft) * inverseScaleFactor
@@ -583,9 +587,7 @@ export class Board {
       const elementIndex = hoverItem.elementIndexAt(x, y)
       if (elementIndex < 0) {
         hoverItem.hover(false, hoverElementIndex)
-        delete this.hoverItem
-
-        this.actions.forEach(action => {
+        for (const action of this.actions) {
           const item = action.item
           if (item !== hoverItem) {
             const elementIndex = item.elementIndexAt(x, y)
@@ -597,15 +599,16 @@ export class Board {
               return
             }
           }
-        })
-        this.canvas.style.cursor = "auto"
+        }
+        delete this.hoverItem
+        this.setPointerCursor(false)
       } else if (elementIndex !== hoverElementIndex) {
         hoverItem.hover(false, hoverElementIndex)
         hoverItem.hover(true, elementIndex)
         this.hoverElementIndex = elementIndex
       }
     } else {
-      this.actions.forEach(action => {
+      for (const action of this.actions) {
         const item = action.item
         const elementIndex = item.elementIndexAt(x, y)
         if (elementIndex >= 0) {
@@ -613,10 +616,10 @@ export class Board {
           this.hoverItem = item
           this.hoverElementIndex = elementIndex
           this.actionHandler = action.handler
-          this.canvas.style.cursor = "pointer"
+          this.setPointerCursor()
           return
         }
-      })
+      }
     }
   }
 
