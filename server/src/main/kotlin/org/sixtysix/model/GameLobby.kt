@@ -17,7 +17,7 @@ data class GameLobby(val id: Int, val playground: Playground) {
 
     fun indexOfPlayerId(id: String) = playerIds.indexOf(id)
 
-    fun toGame() = Game(id, playerIds).also { it.playground = playground }
+    fun toGame() = Game(id, playerIds, playground)
 
     companion object {
         const val MAX_PLAYERS = 5

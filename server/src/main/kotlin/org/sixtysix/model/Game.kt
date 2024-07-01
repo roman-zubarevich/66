@@ -9,6 +9,12 @@ import java.time.format.DateTimeFormatter
 import javax.crypto.SecretKey
 
 class Game(val id: Int, val playerIds: List<String>) : Persistable {
+
+    constructor(id: Int, playerIds: List<String>, playground: Playground) : this(id, playerIds) {
+        this.playground = playground
+        secretKeys = getPlayerKeys()
+    }
+
     var board: Board = Board(playerIds.size, -1)
     val totalScores: MutableList<Int> = MutableList(playerIds.size) { 0 }
     val startTime: String = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
@@ -33,7 +39,7 @@ class Game(val id: Int, val playerIds: List<String>) : Persistable {
     var playground: Playground? = null
 
     @Transient
-    private var secretKeys: List<SecretKey> = getPlayerKeys()
+    private var secretKeys: List<SecretKey> = emptyList()
     @Transient
     private var pendingAckPlayerIds: MutableSet<String> = mutableSetOf()
     @Transient
