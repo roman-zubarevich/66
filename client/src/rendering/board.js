@@ -2,8 +2,10 @@ import { Button } from './button'
 import { Card } from './card'
 import { Cat, CatPosition, LEFT } from './cat'
 import { initRendering, renderer, setScaleFactor } from './common'
+import { Countdown } from './countdown'
 import { Deck } from './deck'
 import { Hand } from './hand'
+import { Hint } from './hint'
 import { Label } from './label'
 import { ANGLE_90, ANGLE_180, ANGLE_270, CLOSER_LOOK_SCALE, HALF_CARD_HEIGHT, Position } from './position'
 import { Sign } from './sign'
@@ -53,7 +55,13 @@ export class Board {
     this.turnLabel = new Label(new Position(20, 925, 0, 1.2), "", false)
     this.infoLabel = new Label(new Position(800, 500, 0, 1.5), "")
 
-    this.discardButton = new Button(980, 590, "DiscardButton")
+    this.discardButton = new Button(980, 590, "DiscardButton", enable => {
+      if (enable) {
+        this.hint?.inform(1200, 640)
+      } else {
+        this.hint?.reset()
+      }
+    })
     this.showCardsButton = new Button(1050, 880, "ShowCardsButton")
     this.okButton = new Button(1050, 880, "OkButton")
     this.stopButton = new Button(1050, 880, "StopButton")
@@ -69,6 +77,19 @@ export class Board {
     ]
 
     this.stopSign = new Sign()
+
+    this.countdown = new Countdown(new Position(800, 680, 0, 1.5))
+    this.peekOwnHint = new Hint("PeekOwn")
+    this.peekAnothersHint = new Hint("PeekAnother")
+    this.exchangeHint = new Hint("Exchange")
+    this.hintByCardValue = {
+      7: this.peekOwnHint,
+      8: this.peekOwnHint,
+      9: this.peekAnothersHint,
+      10: this.peekAnothersHint,
+      11: this.exchangeHint,
+      12: this.exchangeHint,
+    }
 
     this.hiddenCards = Array.from(Array(52), () => new Card())
 
@@ -201,6 +222,9 @@ export class Board {
       return
     }
 
+    this.hint?.reset()
+    delete this.hint
+    this.countdown.reset()
     this.stopSign.reset()
     this.cats.forEach(cat => cat.reset())
     this.deck.reset()
@@ -243,6 +267,7 @@ export class Board {
       this.deckCard.setValue(deckCard)
       await this.deckCard.moveTo(Board.deckCardPosition)
       await this.deckCard.show()
+      this.hint = this.hintByCardValue[deckCard]
     }
 
     if (discardedValue !== undefined) {
@@ -259,6 +284,7 @@ export class Board {
       await this.movingCard.moveTo(Board.discardedCardPosition)
       this.discarded.push(this.movingCard)
       delete this.movingCard
+      this.discardedValue = discardedValue
     }
 
     this.setupActions(actions)
@@ -280,6 +306,7 @@ export class Board {
 
   setupActions(actions) {
     this.clearActions()
+    let hasDiscard = false, hasHandActions = false
     if (actions) {
       actions.forEach(action => {
         switch (action) {
@@ -294,9 +321,11 @@ export class Board {
             break
           case "Discard":
             this.addAction(this.discardButton, () => this.act(action))
+            hasDiscard = true
             break
           case "PickOwnCard":
             this.addAction(this.hands[this.playerIndex], cardIndex => this.act(action, { cardIndex }))
+            hasHandActions = true
             break
           case "PickAnothersCard":
             this.hands.forEach((hand, playerIndex) => {
@@ -304,6 +333,7 @@ export class Board {
                 this.addAction(hand, cardIndex => this.act(action, { playerIndex, cardIndex }))
               }
             })
+            hasHandActions = true
             break
           case "ShowCards":
             this.addAction(this.showCardsButton, () => {
@@ -343,6 +373,12 @@ export class Board {
         }
       })
 
+      if (hasHandActions && !hasDiscard) {
+        // Some special card was discarded
+        this.hint = this.hintByCardValue[this.discardedValue]
+        this.hint?.showAction(800, 750)
+      }
+
       if (this.lastMouseEvent) {
         this.mouseMove(this.lastMouseEvent)
       }
@@ -373,6 +409,8 @@ export class Board {
 
   act(action, params = {}) {
     this.clearActions()
+    this.hint?.reset()
+    delete this.hint
     this.gameActionHandler(action, params)
   }
 
@@ -415,6 +453,11 @@ export class Board {
   }
 
   async revealCards(cardInfos) {
+    if (cardInfos.length > 1) {
+      // Each player is looking into own first cards
+      await this.countdown.start()
+    }
+
     const promises = []
     // Wake up all looking cats
     for (let { lookingPlayerIndexes } of cardInfos) {
@@ -533,6 +576,7 @@ export class Board {
 
       this.deck.draw(elapsedTimeSec)
       this.hands.forEach(hand => hand.draw(elapsedTimeSec))
+      this.hint?.draw(elapsedTimeSec)
       this.deckCard?.draw(elapsedTimeSec)
       if (this.discarded.length > 0) {
         this.discardedCard.draw(elapsedTimeSec)
@@ -541,6 +585,7 @@ export class Board {
       this.cats.forEach(cat => cat.draw(elapsedTimeSec))
       this.hands.forEach(hand => hand.drawRevealed(elapsedTimeSec))
       this.movingCard?.draw(elapsedTimeSec)
+      this.countdown.draw(elapsedTimeSec)
     } else {
       this.infoLabel.draw(elapsedTimeSec)
       this.hands.forEach(hand => hand.draw(elapsedTimeSec))
@@ -566,6 +611,12 @@ export class Board {
 
     this.cats.forEach(cat => cat.delete())
     this.stopSign.delete()
+
+    this.countdown.delete()
+    this.peekOwnHint.delete()
+    this.peekAnothersHint.delete()
+    this.exchangeHint.delete()
+
     renderer.delete()
 
     Hand.count = 0

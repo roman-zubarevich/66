@@ -47,8 +47,10 @@ class Board(playerCount: Int, var activePlayerIndex: Int) {
 
     private fun takePickedDeckCard() = deck.removeAt(deckCardIndex).also { deckCardIndex = -1 }
 
-    fun discardDeckCard() {
+    fun discardDeckCard(): Boolean {
+        if (deckCardIndex < 0) return false
         discarded = takePickedDeckCard()
+        return true
     }
 
     fun pickOwnCards(cardIndexes: List<Int>) {

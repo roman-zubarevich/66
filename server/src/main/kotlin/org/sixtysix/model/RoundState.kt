@@ -90,9 +90,8 @@ enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
     }),
 
     DISCARDING_PLAIN({ session, game ->
-        game.board.discardDeckCard()
-        // Discarded card always exists here
-        game.notifyAllPlayers(session, game.board.boardUpdated()) { game.newTurn(session) }
+        if (game.board.discardDeckCard()) game.notifyAllPlayers(session, game.board.boardUpdated()) { game.newTurn(session) }
+        else game.newTurn(session)
     }),
 
     DISCARDING_7_8({ session, game -> game.notifyDiscardedWithAction<PickOwnCard>(session) }),
@@ -141,9 +140,9 @@ private fun Board.boardUpdated(actions: List<String>? = null) =
     BoardUpdated(deckSize = deckSize, discardedValue = discardedCard, actions = actions)
 
 private suspend inline fun <reified T : Request> Game.notifyDiscardedWithAction(session: Session) {
-    board.discardDeckCard()
-    // Discarded card always exists here
-    notifyAllPlayersInTwoSteps(session, board.boardUpdated(), board.boardUpdated(listOf(T::class.simpleName!!)))
+    if (board.discardDeckCard())
+        notifyAllPlayersInTwoSteps(session, board.boardUpdated(), board.boardUpdated(listOf(T::class.simpleName!!)))
+    else sendToActivePlayer(session, BoardUpdated(actions = listOf(T::class.simpleName!!)))
 }
 
 private suspend fun Game.seeCard(session: Session, targetPlayerIndex: Int, cardIndex: Int, value: Byte) {

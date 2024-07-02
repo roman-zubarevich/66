@@ -45,6 +45,7 @@
           <h6>Interaction</h6>
             <p>When you look at some card secretly, i.e. without exposing it to other players, that card is brought visually closer to you.</p>
             <p>All clickable objects on the table are easily recognizable by their green color. Selectable cards pulse with darker and brighter green, and available action buttons are drawn with green lines.</p>
+            <p>Hints are shown in orange color; they are animated but not clickable.</p>
             <p>When a round stop is requested, a stop sign is raised near the player who requested it and remains there until the end of the round.</p>
           <h6>Avatars</h6>
             <p>Every player has a cat avatar. Its main purpose is to visualize certain game events:

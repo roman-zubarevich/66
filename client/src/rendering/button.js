@@ -2,7 +2,7 @@ import { assets, renderer, rive, scaleFactor } from "./common"
 
 
 export class Button {
-  constructor(left, top, artboardName) {
+  constructor(left, top, artboardName, hoverCallback) {
     const artboard = assets.artboardByName(artboardName)
     this.artboard = artboard
 
@@ -17,6 +17,7 @@ export class Button {
     this.bottom = top + artboard.bounds.maxY
 
     this.enabled = false
+    this.hoverCallback = hoverCallback
   }
 
   enableClick(value = true) {
@@ -25,6 +26,9 @@ export class Button {
 
   hover(value = true) {
     this.hoverFlag.value = value
+    if (this.hoverCallback) {
+      this.hoverCallback(value)
+    }
   }
 
   click() {

@@ -36,6 +36,7 @@ export class Sign {
   reset() {
     if (this.isShown) {
       this.instantHideTrigger.fire()
+      this.isShown = false
     }
 
     if (this.animation) {
