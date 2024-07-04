@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 enum class ErrorReason {
     GAME_NOT_FOUND,
     PLAYER_NOT_FOUND,
+    DUPLICATE_SESSION,
 }

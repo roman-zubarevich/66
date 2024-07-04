@@ -29,6 +29,7 @@ const waitingForResponse = ref(false)
 const openGameById = ref({})  // Includes available and fully booked
 const suspendedGameById = ref({})
 const playerNameById = ref({})
+const error = ref(null)
 const offlinePlayerIds = []
 
 const state = ref(State.WorldLobby)
@@ -81,24 +82,23 @@ function initMessaging() {
 }
 
 function onConnect() {
-  connected.value = true
-    if (playerSecret.value) {
-      act("ListSuspendedGames", { playerSecret: playerSecret.value })
-    } else if (playerName.value) {
-      registerPlayer()
-    }
+  if (playerSecret.value) {
+    act("ListSuspendedGames", { playerSecret: playerSecret.value })
+  } else if (playerName.value) {
+    registerPlayer()
+  }
 }
 
 function onDisconnect() {
   connected.value = false
-    waitingForResponse.value = false
-    playerNameById.value = {}
-    openGameById.value = {}
-    suspendedGameById.value = {}
-    gameInfo.value = null
-    offlinePlayerIds.length = 0
-    state.value = State.WorldLobby
-    setTimeout(initMessaging, 10000)
+  waitingForResponse.value = false
+  playerNameById.value = {}
+  openGameById.value = {}
+  suspendedGameById.value = {}
+  gameInfo.value = null
+  offlinePlayerIds.length = 0
+  state.value = State.WorldLobby
+  setTimeout(initMessaging, 10000)
 }
 
 function setupMessageHandlers() {
@@ -124,9 +124,11 @@ function setupMessageHandlers() {
     games.forEach(game => openGameById.value[game.gameId] = game)
   })
   addResponseHandler("SuspendedGames", ({ games }) => {
+    connected.value = true
     games.forEach(game => suspendedGameById.value[game.gameId] = game)
   })
   addResponseHandler("PlayerInfo", ({ name, secret }) => {
+    connected.value = true
     setPlayerName(name)
     if (!playerSecret.value) {
       setSecret(secret)
@@ -197,6 +199,8 @@ function setupMessageHandlers() {
     if (errorReason === "PLAYER_NOT_FOUND") {
       playerSecret.value = null
       registerPlayer()
+    } else if (errorReason === "DUPLICATE_SESSION") {
+      error.value = "Duplicate session, please switch to the first one to play"
     }
   })
 }
@@ -265,7 +269,8 @@ function addResponseHandler(msgType, handler) {
         </template>
       </div>
       <div v-else class="d-flex mt-4 justify-content-center">
-        <div class="spinner-grow"></div>
+        <div v-if="error">{{ error }}</div>
+        <div v-else class="spinner-grow"></div>
       </div>
     </div>
   </template>

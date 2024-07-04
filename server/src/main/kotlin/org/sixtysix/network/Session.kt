@@ -25,12 +25,13 @@ data class Session(
     var isActive = true
 
 
-    suspend fun setPlayer(player: Player) = playerMutex.withLock {
+    suspend fun setPlayer(player: Player): Boolean = playerMutex.withLock {
         if (this.player?.id != player.id) {
             this.player?.id?.let { sessionManager.removePlayerId(it) }
-            sessionManager.setSessionPlayerId(this, player.id)
+            if (sessionManager.setSessionPlayerId(this, player.id) != null) return false
         }
         this.player = player
+        return true
     }
 
     fun getPlayer() = player

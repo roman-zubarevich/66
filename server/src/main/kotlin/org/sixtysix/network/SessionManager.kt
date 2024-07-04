@@ -17,7 +17,7 @@ class SessionManager(private val messageEncoder: MessageEncoder) {
 
     private val sessionByPlayerId = ConcurrentMap<String, Session>()
 
-    fun setSessionPlayerId(session: Session, playerId: String) = sessionByPlayerId.put(playerId, session)
+    fun setSessionPlayerId(session: Session, playerId: String) = sessionByPlayerId.putIfAbsent(playerId, session)
 
     fun removePlayerId(playerId: String) = sessionByPlayerId.remove(playerId)
 

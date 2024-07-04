@@ -42,9 +42,10 @@ class ListSuspendedGames(private val playerSecret: String) : Request() {
                 playground.repository.save(player)
             }
 
-            session.setPlayer(player)
-            session.send(SuspendedGames(games))
-            session.sendToAll(PlayerStatus(player.id, player.name, true))
+            if (session.setPlayer(player)) {
+                session.send(SuspendedGames(games))
+                session.sendToAll(PlayerStatus(player.id, player.name, true))
+            } else session.send(failure("Duplicate session", ErrorReason.DUPLICATE_SESSION))
         } ?: session.send(failure("Unknown player", ErrorReason.PLAYER_NOT_FOUND))
     }
 }
