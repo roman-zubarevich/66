@@ -1,6 +1,7 @@
 package org.sixtysix.model
 
 import org.sixtysix.network.Session
+import org.sixtysix.protocol.dto.Hint
 import org.sixtysix.protocol.dto.PlayerCards
 import org.sixtysix.protocol.dto.inbound.Discard
 import org.sixtysix.protocol.dto.inbound.PickAnothersCard
@@ -52,7 +53,12 @@ enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
         val actions = mutableListOf(PickOwnCard::class.simpleName!!, Discard::class.simpleName!!)
         if (game.board.activePlayerHandSize > 1) actions.add(ShowCards::class.simpleName!!)
         // Deck card is always valid here, since it was just picked
-        game.sendToActivePlayer(session, BoardUpdated(deckSize = game.board.deckSize, deckCard = game.board.deckCard, actions = actions))
+        game.sendToActivePlayer(session, BoardUpdated(
+            deckSize = game.board.deckSize,
+            deckCard = game.board.deckCard,
+            actions = actions,
+            hint = Hint.fromCard(game.board.deckCard),
+        ))
     }),
 
     DISCARDED_CARD_TAKEN({ session, game ->
@@ -94,11 +100,11 @@ enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
         else game.newTurn(session)
     }),
 
-    DISCARDING_7_8({ session, game -> game.notifyDiscardedWithAction<PickOwnCard>(session) }),
+    DISCARDING_7_8({ session, game -> game.notifyDiscardedWithAction<PickOwnCard>(session, Hint.PEEK_OWN_CARD) }),
 
-    DISCARDING_9_10({ session, game -> game.notifyDiscardedWithAction<PickAnothersCard>(session) }),
+    DISCARDING_9_10({ session, game -> game.notifyDiscardedWithAction<PickAnothersCard>(session, Hint.PEEK_ANOTHERS_CARD) }),
 
-    DISCARDING_11_12({ session, game -> game.notifyDiscardedWithAction<PickOwnCard>(session) }),
+    DISCARDING_11_12({ session, game -> game.notifyDiscardedWithAction<PickOwnCard>(session, Hint.EXCHANGE_CARDS) }),
 
     SEEING_OWN_CARD({ session, game ->
         game.seeCard(session, game.board.activePlayerIndex, game.board.pickedCardIndex, game.board.pickedOwnCard)
@@ -136,13 +142,13 @@ enum class RoundState(val advance: suspend (Session, Game) -> Unit) {
     });
 }
 
-private fun Board.boardUpdated(actions: List<String>? = null) =
-    BoardUpdated(deckSize = deckSize, discardedValue = discardedCard, actions = actions)
+private fun Board.boardUpdated(actions: List<String>? = null, hint: Hint? = null) =
+    BoardUpdated(deckSize = deckSize, discardedValue = discardedCard, actions = actions, hint = hint)
 
-private suspend inline fun <reified T : Request> Game.notifyDiscardedWithAction(session: Session) {
+private suspend inline fun <reified T : Request> Game.notifyDiscardedWithAction(session: Session, hint: Hint) {
     if (board.discardDeckCard())
-        notifyAllPlayersInTwoSteps(session, board.boardUpdated(), board.boardUpdated(listOf(T::class.simpleName!!)))
-    else sendToActivePlayer(session, BoardUpdated(actions = listOf(T::class.simpleName!!)))
+        notifyAllPlayersInTwoSteps(session, board.boardUpdated(), board.boardUpdated(listOf(T::class.simpleName!!), hint))
+    else sendToActivePlayer(session, BoardUpdated(actions = listOf(T::class.simpleName!!), hint = hint))
 }
 
 private suspend fun Game.seeCard(session: Session, targetPlayerIndex: Int, cardIndex: Int, value: Byte) {

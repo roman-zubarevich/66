@@ -82,13 +82,10 @@ export class Board {
     this.peekOwnHint = new Hint("PeekOwn")
     this.peekAnothersHint = new Hint("PeekAnother")
     this.exchangeHint = new Hint("Exchange")
-    this.hintByCardValue = {
-      7: this.peekOwnHint,
-      8: this.peekOwnHint,
-      9: this.peekAnothersHint,
-      10: this.peekAnothersHint,
-      11: this.exchangeHint,
-      12: this.exchangeHint,
+    this.hintByName = {
+      PEEK_OWN_CARD: this.peekOwnHint,
+      PEEK_ANOTHERS_CARD: this.peekAnothersHint,
+      EXCHANGE_CARDS: this.exchangeHint,
     }
 
     this.hiddenCards = Array.from(Array(52), () => new Card())
@@ -164,7 +161,7 @@ export class Board {
         deck.addCard(discardedCard)
 
         // Make sure we have enough spare cards to fill deck and hands
-        this.discarded.forEach(card => card.hide(true))
+        this.discarded.forEach(card => card.reset())
         this.hiddenCards.push(...this.discarded)
         this.discarded.length = 0
       }
@@ -261,14 +258,8 @@ export class Board {
     this.reset()
   }
 
-  async update(deckCard, discardedValue, actions) {
-    if (deckCard !== undefined) {
-      this.deckCard = this.deck.takeCard()
-      this.deckCard.setValue(deckCard)
-      await this.deckCard.moveTo(Board.deckCardPosition)
-      await this.deckCard.show()
-      this.hint = this.hintByCardValue[deckCard]
-    }
+  async update(deckCard, discardedValue, actions, hint) {
+    this.hint = this.hintByName[hint]
 
     if (discardedValue !== undefined) {
       if (this.deckCard) {
@@ -285,6 +276,15 @@ export class Board {
       this.discarded.push(this.movingCard)
       delete this.movingCard
       this.discardedValue = discardedValue
+    }
+
+    if (deckCard !== undefined) {
+      this.deckCard = this.deck.takeCard()
+      this.deckCard.setValue(deckCard)
+      await this.deckCard.moveTo(Board.deckCardPosition)
+      await this.deckCard.show()
+    } else {
+      this.hint?.showAction(800, 750)
     }
 
     this.setupActions(actions)
@@ -306,7 +306,6 @@ export class Board {
 
   setupActions(actions) {
     this.clearActions()
-    let hasDiscard = false, hasHandActions = false
     if (actions) {
       actions.forEach(action => {
         switch (action) {
@@ -321,11 +320,9 @@ export class Board {
             break
           case "Discard":
             this.addAction(this.discardButton, () => this.act(action))
-            hasDiscard = true
             break
           case "PickOwnCard":
             this.addAction(this.hands[this.playerIndex], cardIndex => this.act(action, { cardIndex }))
-            hasHandActions = true
             break
           case "PickAnothersCard":
             this.hands.forEach((hand, playerIndex) => {
@@ -333,7 +330,6 @@ export class Board {
                 this.addAction(hand, cardIndex => this.act(action, { playerIndex, cardIndex }))
               }
             })
-            hasHandActions = true
             break
           case "ShowCards":
             this.addAction(this.showCardsButton, () => {
@@ -372,12 +368,6 @@ export class Board {
             console.error("Unexpected action", action)
         }
       })
-
-      if (hasHandActions && !hasDiscard) {
-        // Some special card was discarded
-        this.hint = this.hintByCardValue[this.discardedValue]
-        this.hint?.showAction(800, 750)
-      }
 
       if (this.lastMouseEvent) {
         this.mouseMove(this.lastMouseEvent)

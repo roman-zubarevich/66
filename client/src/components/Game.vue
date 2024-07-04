@@ -73,8 +73,8 @@ onMounted(() => {
       }
     }).catch(promiseRejected)
   })
-  addWsHandler("BoardUpdated", ({ deckCard, discardedValue, actions }) => {
-    board.update(deckCard, discardedValue, actions).then(() => sendAck()).catch(promiseRejected)
+  addWsHandler("BoardUpdated", ({ deckCard, discardedValue, actions, hint }) => {
+    board.update(deckCard, discardedValue, actions, hint).then(() => sendAck()).catch(promiseRejected)
   })
   addWsHandler("CardExchanged", ({ playerIndex, cardIndex, anotherPlayerIndex, anotherPlayerCardIndex }) => {
     board.exchangeCards(playerIndex, cardIndex, anotherPlayerIndex, anotherPlayerCardIndex).then(() => sendAck()).catch(promiseRejected)
