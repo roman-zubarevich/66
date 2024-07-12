@@ -5,4 +5,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("OnlinePlayers")
-class OnlinePlayers(private val nameById: Map<String, String>) : Notification()
+data class OnlinePlayers(private val nameById: Map<String, String>) : Notification()

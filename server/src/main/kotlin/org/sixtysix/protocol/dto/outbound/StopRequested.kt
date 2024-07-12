@@ -5,4 +5,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("StopRequested")
-class StopRequested(private val stopperIndex: Int) : Notification()
+data class StopRequested(private val stopperIndex: Int) : Notification()

@@ -6,4 +6,4 @@ import org.sixtysix.protocol.dto.OpenGame
 
 @Serializable
 @SerialName("OpenGames")
-class OpenGames(val games: List<OpenGame>) : Notification()
+data class OpenGames(val games: List<OpenGame>) : Notification()

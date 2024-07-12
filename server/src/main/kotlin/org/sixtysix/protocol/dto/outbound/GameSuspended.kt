@@ -6,4 +6,4 @@ import org.sixtysix.protocol.dto.SuspendedGame
 
 @Serializable
 @SerialName("GameSuspended")
-class GameSuspended(private val suspendedGame: SuspendedGame, private val playerIndex: Int) : Notification()
+data class GameSuspended(private val suspendedGame: SuspendedGame, private val playerIndex: Int) : Notification()

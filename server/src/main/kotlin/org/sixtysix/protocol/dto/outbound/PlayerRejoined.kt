@@ -5,4 +5,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("PlayerRejoined")
-class PlayerRejoined(private val gameId: Int, private val playerIndex: Int) : Notification()
+data class PlayerRejoined(private val gameId: Int, private val playerIndex: Int) : Notification()

@@ -6,4 +6,4 @@ import org.sixtysix.protocol.dto.SuspendedGame
 
 @Serializable
 @SerialName("SuspendedGames")
-class SuspendedGames(val games: List<SuspendedGame>) : Notification()
+data class SuspendedGames(val games: List<SuspendedGame>) : Notification()

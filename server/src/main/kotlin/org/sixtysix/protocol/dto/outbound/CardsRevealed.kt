@@ -6,4 +6,4 @@ import org.sixtysix.protocol.dto.PlayerCards
 
 @Serializable
 @SerialName("CardsRevealed")
-class CardsRevealed(private val cardInfos: List<PlayerCards>) : Notification()
+data class CardsRevealed(private val cardInfos: List<PlayerCards>) : Notification()

@@ -9,7 +9,7 @@ import org.sixtysix.protocol.MessageEncoder
 import org.sixtysix.protocol.dto.outbound.Notification
 
 data class Session(
-    private val webSocketSession: WebSocketSession,
+    val webSocketSession: WebSocketSession,
     val sessionManager: SessionManager,
     private val messageEncoder: MessageEncoder,
 ) {
@@ -58,7 +58,10 @@ data class Session(
     }
 
 
-    suspend fun send(notification: Notification) = send(messageEncoder.encode(notification))
+    suspend fun send(notification: Notification) {
+        log(notification, webSocketSession)
+        send(messageEncoder.encode(notification))
+    }
 
     suspend fun sendTo(playerId: String, notification: Notification) {
         sessionManager.getSession(playerId)?.send(notification) ?: logger.warn("Player {} is not connected", playerId)
@@ -67,20 +70,26 @@ data class Session(
     suspend fun sendToCoPlayers(notification: Notification) {
         gameId?.let { id ->
             val message = messageEncoder.encode(notification)
-            sessionManager.getSessionsInGame(id).forEach { it.send(message) }
+            val sessions = sessionManager.getSessionsInGame(id)
+            log(notification, sessions)
+            sessions.forEach { it.send(message) }
         } ?: logger.warn("Cannot send in game: session {} is not in game", webSocketSession)
     }
 
     suspend fun sendToNonCoPlayers(notification: Notification) {
         gameId?.let { id ->
             val message = messageEncoder.encode(notification)
-            sessionManager.getSessionsOutsideOfGame(id).forEach { it.send(message) }
+            val sessions = sessionManager.getSessionsOutsideOfGame(id)
+            log(notification, sessions)
+            sessions.forEach { it.send(message) }
         } ?: logger.warn("Cannot send outside of game: session {} is not in game", webSocketSession)
     }
 
     suspend fun sendToAll(notification: Notification, includingSelf: Boolean = false) {
         val message = messageEncoder.encode(notification)
-        sessionManager.getAllSessions().forEach { if (includingSelf || it !== this) it.send(message) }
+        val sessions = sessionManager.getAllSessions()
+        log(notification, sessions)
+        sessions.forEach { if (includingSelf || it !== this) it.send(message) }
     }
 
     fun close() {
@@ -90,7 +99,12 @@ data class Session(
     }
 
     private suspend fun send(message: String) {
-        logger.debug("Sending {} via {}", message, webSocketSession)
         if (isActive) webSocketSession.send(message)
+    }
+
+    private fun log(notification: Notification, sessions: Collection<Session>) = log(notification, sessions.map { it.webSocketSession })
+
+    companion object {
+        private fun log(notification: Notification, dst: Any) = logger.info("Sending {} via {}", notification, dst)
     }
 }

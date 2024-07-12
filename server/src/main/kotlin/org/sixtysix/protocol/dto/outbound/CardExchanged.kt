@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("CardExchanged")
-class CardExchanged(
+data class CardExchanged(
     private val playerIndex: Int,
     private val cardIndex: Int,
     private val anotherPlayerIndex: Int,

@@ -5,4 +5,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("GameDeleted")
-class GameDeleted(private val gameId: Int) : Notification()
+data class GameDeleted(private val gameId: Int) : Notification()

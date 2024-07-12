@@ -5,4 +5,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("PlayerStatus")
-class PlayerStatus(private val id: String, private val name: String, private val isOnline: Boolean) : Notification()
+data class PlayerStatus(private val id: String, private val name: String, private val isOnline: Boolean) : Notification()

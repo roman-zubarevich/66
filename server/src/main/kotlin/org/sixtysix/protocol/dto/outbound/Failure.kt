@@ -6,4 +6,4 @@ import org.sixtysix.protocol.dto.ErrorReason
 
 @Serializable
 @SerialName("Failure")
-class Failure(private val command: String, private val message: String, private val errorReason: ErrorReason? = null) : Notification()
+data class Failure(private val command: String, private val message: String, private val errorReason: ErrorReason? = null) : Notification()

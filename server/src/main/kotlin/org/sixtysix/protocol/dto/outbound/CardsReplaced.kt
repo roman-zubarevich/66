@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("CardsReplaced")
-class CardsReplaced(
+data class CardsReplaced(
     private val playerIndex: Int,
     private val cardIndexes: List<Int>,
     private val fromDeck: Boolean,

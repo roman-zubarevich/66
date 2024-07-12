@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BoardInitialized")
-class BoardInitialized(
+data class BoardInitialized(
     private val activePlayerIndex: Int,
     private val deckSize: Int,
     private val discardedValue: Byte?,

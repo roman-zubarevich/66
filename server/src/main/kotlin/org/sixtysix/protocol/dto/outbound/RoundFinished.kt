@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("RoundFinished")
-class RoundFinished(
+data class RoundFinished(
     private val hands: List<List<Byte>>,
     private val scores: List<Int>,
     private val totalScores: List<Int>,
